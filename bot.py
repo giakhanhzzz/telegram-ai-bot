@@ -1,31 +1,50 @@
 import os
 import telebot
-import google.generativeai as genai
+from openai import OpenAI
 
-# Lấy các khóa bí mật từ biến môi trường của Koyeb
-TELEGRAM_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
-GEMINI_API_KEY = os.environ.get('AI_API_KEY')
+# 1. Khởi tạo mã bảo mật
+TELEGRAM_TOKEN = os.environ.get('')
+OPENROUTER_API_KEY = os.environ.get('AI_API_KEY')
 
-# Khởi tạo cấu hình AI và Bot Telegram
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash') # Phiên bản AI ổn định hiện tại
-bot = telebot.TeleBot(8943070262:AAEoPlV22E26Fr3fcdnI9SPLtcmCu-ZPFJs)
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
+client = OpenAI(
+    base_url="https://openrouter.ai",
+    api_key=OPENROUTER_API_KEY,
+)
 
-# Xử lý khi nhận được tin nhắn từ người dùng
+# Tạo một biến để nhớ model đang chọn (mặc định ban đầu là DeepSeek R1)
+CURRENT_MODEL = "deepseek/deepseek-r1:free"
+
+# Lệnh /change để bạn đổi sang AI khác trực tiếp trên Telegram
+@bot.message_handler(commands=['change'])
+def change_model(message):
+    global CURRENT_MODEL
+    # Lấy tên model người dùng gõ sau lệnh /change
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        bot.reply_to(message, f"🤖 AI hiện tại: `{CURRENT_MODEL}`\n\nMẹo: Để đổi AI, hãy gõ theo cú pháp:\n`/change tên_model_mới`\n\nVí dụ:\n`/change meta-llama/llama-3.3-70b-instruct:free`", parse_mode="Markdown")
+        return
+    
+    new_model = args[1].strip()
+    CURRENT_MODEL = new_model
+    bot.reply_to(message, f"✅ Đã chuyển thành công sang AI: `{CURRENT_MODEL}`", parse_mode="Markdown")
+
+# Xử lý tin nhắn chat thông thường
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     try:
-        # Phản hồi tạm thời để người dùng biết AI đang xử lý
-        sent_msg = bot.reply_to(message, "AI đang suy nghĩ...")
+        sent_msg = bot.reply_to(message, f"⌛ ({CURRENT_MODEL.split('/')[-1]}) đang suy nghĩ...")
         
-        # Gọi AI tạo câu trả lời
-        response = model.generate_content(message.text)
+        # Gọi mô hình đang được lựa chọn lưu trong biến CURRENT_MODEL
+        response = client.chat.completions.create(
+            model=CURRENT_MODEL, 
+            messages=[{"role": "user", "content": message.text}]
+        )
         
-        # Cập nhật tin nhắn tạm bằng câu trả lời của AI
-        bot.edit_message_text(response.text, chat_id=message.chat.id, message_id=sent_msg.message_id)
+        ai_reply = response.choices.message.content
+        bot.edit_message_text(ai_reply, chat_id=message.chat.id, message_id=sent_msg.message_id)
     except Exception as e:
-        bot.reply_to(message, f"Có lỗi xảy ra: {str(e)}")
+        bot.reply_to(message, f"❌ Lỗi khi gọi model `{CURRENT_MODEL}`:\n{str(e)}", parse_mode="Markdown")
 
-# Chạy Bot
-print("Bot đang khởi động...")
+print("Bot Telegram đa model đang chạy...")
 bot.infinity_polling()
