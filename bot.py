@@ -2,8 +2,8 @@ import os
 import telebot
 from openai import OpenAI
 
-# 1. Khởi tạo mã bảo mật
-TELEGRAM_TOKEN = os.environ.get('')
+# 1. Khởi tạo mã bảo mật (DÁN TRỰC TIẾP TOKEN VÀO ĐÂY)
+TELEGRAM_TOKEN = "DÁN_MÃ_TOKEN_BOT_MỚI_CỦA_BẠN_VÀO_ĐÂY"
 OPENROUTER_API_KEY = os.environ.get('AI_API_KEY')
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
