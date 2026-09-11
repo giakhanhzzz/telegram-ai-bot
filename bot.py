@@ -9,7 +9,7 @@ GEMINI_API_KEY = os.environ.get('AI_API_KEY')
 # Khởi tạo cấu hình AI và Bot Telegram
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash') # Phiên bản AI ổn định hiện tại
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+bot = telebot.TeleBot(8943070262:AAEoPlV22E26Fr3fcdnI9SPLtcmCu-ZPFJs)
 
 # Xử lý khi nhận được tin nhắn từ người dùng
 @bot.message_handler(func=lambda message: True)
